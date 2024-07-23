@@ -77,7 +77,7 @@ type EthereumObserver struct {
 	endpoint          string
 	mux               sync.Mutex
 	latestBlock       int
-	blocksToRead      []int
+	blocksToRead      map[int]struct{}
 	subscribedAddress map[string]struct{}
 	transactionsStore TransactionsStore
 }
@@ -86,7 +86,7 @@ func NewEthereumObserver(endpoint string, txStore TransactionsStore) *EthereumOb
 	return &EthereumObserver{
 		endpoint:          endpoint,
 		latestBlock:       0,
-		blocksToRead:      []int{},
+		blocksToRead:      make(map[int]struct{}),
 		subscribedAddress: make(map[string]struct{}),
 		transactionsStore: txStore,
 	}
@@ -201,7 +201,7 @@ func (e *EthereumObserver) collectSubscribedAddresses(transactions []Transaction
 func (e *EthereumObserver) addBlockToRead(blockNum int) {
 	e.mux.Lock()
 	defer e.mux.Unlock()
-	e.blocksToRead = append(e.blocksToRead, blockNum)
+	e.blocksToRead[blockNum] = struct{}{}
 }
 
 // UpdateTransactions updates the transactions in the observer for a given block number
@@ -249,6 +249,10 @@ func (e *EthereumObserver) updateLatestBlock(blockNum int) bool {
 func (e *EthereumObserver) Subscribe(address string) bool {
 	e.mux.Lock()
 	defer e.mux.Unlock()
+	if _, ok := e.subscribedAddress[strings.ToLower(address)]; ok {
+		slog.Debug("Already subscribed to address", "address", address)
+		return false
+	}
 	e.subscribedAddress[strings.ToLower(address)] = struct{}{}
 	slog.Debug("Subscribed to address", "address", address)
 	return true
@@ -262,6 +266,12 @@ func (e *EthereumObserver) GetCurrentBlock() int {
 // GetTransactions returns transactions for a given address
 func (e *EthereumObserver) GetTransactions(address string) []Transaction {
 	return e.transactionsStore.GetTransactions(strings.ToLower(address))
+}
+
+func (e *EthereumObserver) removeBlockToRead(blockNum int) {
+	e.mux.Lock()
+	defer e.mux.Unlock()
+	delete(e.blocksToRead, blockNum)
 }
 
 // ObserveChain observes the ethereum chain and updates transactions in the observer
@@ -298,12 +308,9 @@ func (e *EthereumObserver) ObserveChain() {
 			e.addBlockToRead(i)
 		}
 
-		// get blocks to read and clear the blocks to read array in the observer
-		readSlice := e.blocksToRead
-		e.blocksToRead = []int{}
-
 		// update transactions for each block
-		for _, blockNum := range readSlice {
+		for blockNum, _ := range e.blocksToRead {
+			e.removeBlockToRead(blockNum)
 			e.UpdateTransactions(blockNum)
 		}
 
