@@ -123,7 +123,10 @@ func TestEthereumObserver_GetBlockNumber(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
-				json.NewEncoder(w).Encode(tt.response)
+				err := json.NewEncoder(w).Encode(tt.response)
+				if err != nil {
+					http.Error(w, "Error encoding response", http.StatusInternalServerError)
+				}
 			}))
 			defer ts.Close()
 			e := NewEthereumObserver(ts.URL, nil)
@@ -180,7 +183,10 @@ func Test_GetBlockByNumber(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
-				json.NewEncoder(w).Encode(tt.response)
+				err := json.NewEncoder(w).Encode(tt.response)
+				if err != nil {
+					http.Error(w, "Error encoding response", http.StatusInternalServerError)
+				}
 			}))
 			defer ts.Close()
 			e := NewEthereumObserver(ts.URL, nil)
@@ -317,7 +323,10 @@ func TestEthereumObserver_UpdateTransactions(t *testing.T) {
 					Result:  []byte(`{"number":"0x1b4","transactions":[{"hash":"0x1","from":"0x2","to":"0x3","value":"0x4"}]}`),
 					Id:      0,
 				}
-				json.NewEncoder(w).Encode(sampleResponse)
+				err := json.NewEncoder(w).Encode(sampleResponse)
+				if err != nil {
+					http.Error(w, "Error encoding response", http.StatusInternalServerError)
+				}
 			} else {
 				w.WriteHeader(http.StatusInternalServerError)
 			}
