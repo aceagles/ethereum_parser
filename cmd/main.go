@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	slog.SetLogLoggerLevel(slog.LevelDebug)
+	slog.SetLogLoggerLevel(slog.LevelWarn)
 
 	// Create a memory store to hold transactions
 	memoryStore := memorystore.NewMemStore()
