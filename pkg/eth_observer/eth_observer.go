@@ -120,10 +120,10 @@ func (e *EthereumObserver) QueryEthClient(request EthRequestStruct) (EthResponse
 		return EthResponseStruct{}, err
 	}
 	if response.Error != nil {
-		return EthResponseStruct{}, fmt.Errorf("Error code: %d, message: %s", response.Error.Code, response.Error.Message)
+		return EthResponseStruct{}, fmt.Errorf("error code: %d, message: %s", response.Error.Code, response.Error.Message)
 	}
 	if response.Id != request.Id {
-		return EthResponseStruct{}, errors.New("Response ID does not match request ID")
+		return EthResponseStruct{}, errors.New("response ID does not match request ID")
 	}
 
 	return response, nil
@@ -148,7 +148,7 @@ func (e *EthereumObserver) GetBlockNumber() (string, error) {
 		return "", err
 	}
 	if blockNum[:2] != "0x" {
-		return "", errors.New("Invalid block number")
+		return "", errors.New("invalid block number")
 	}
 	_, err = strconv.ParseInt(blockNum[2:], 16, 64)
 	if err != nil {
