@@ -30,7 +30,10 @@ func main() {
 		}{
 			LatestBlock: ethObserver.GetCurrentBlock(),
 		}
-		json.NewEncoder(w).Encode(latestBlock)
+		err := json.NewEncoder(w).Encode(latestBlock)
+		if err != nil {
+			http.Error(w, "Error encoding response", http.StatusInternalServerError)
+		}
 	})
 
 	http.HandleFunc("/getTransactions", func(w http.ResponseWriter, r *http.Request) {
@@ -39,7 +42,10 @@ func main() {
 		}{
 			Transactions: ethObserver.GetTransactions(r.URL.Query().Get("address")),
 		}
-		json.NewEncoder(w).Encode(transactionsResponse)
+		err := json.NewEncoder(w).Encode(transactionsResponse)
+		if err != nil {
+			http.Error(w, "Error encoding response", http.StatusInternalServerError)
+		}
 	})
 
 	http.HandleFunc("/subscribe", func(w http.ResponseWriter, r *http.Request) {

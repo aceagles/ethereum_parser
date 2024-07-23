@@ -64,7 +64,10 @@ func Test_QueryEthClient(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
-				json.NewEncoder(w).Encode(tt.response)
+				err := json.NewEncoder(w).Encode(tt.response)
+				if err != nil {
+					http.Error(w, "Error encoding response", http.StatusInternalServerError)
+				}
 			}))
 			defer ts.Close()
 			e := NewEthereumObserver(ts.URL, nil)

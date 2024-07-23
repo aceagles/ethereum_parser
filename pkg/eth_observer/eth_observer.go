@@ -281,13 +281,21 @@ func (e *EthereumObserver) removeBlockToRead(blockNum int) {
 // if there are no blocks to read, it waits for 10s before checking again
 func (e *EthereumObserver) ObserveChain() {
 	// Seed the observer with the latest block. This is to prevent parsing from the genesis block
-	blockNum, err := e.GetBlockNumber()
-	if err != nil {
-		slog.Error(err.Error())
-	}
+	var blocknum int64
+	for blocknum == 0 {
+		blockNum, err := e.GetBlockNumber()
+		if err != nil {
+			slog.Error(err.Error())
+			continue
+		}
 
-	blockNumInt, err := strconv.ParseInt(blockNum[2:], 16, 64)
-	e.updateLatestBlock(int(blockNumInt))
+		blocknum, err := strconv.ParseInt(blockNum[2:], 16, 64)
+		if err != nil {
+			slog.Error(err.Error())
+			continue
+		}
+		e.updateLatestBlock(int(blocknum))
+	}
 
 	// Start observing the chain
 	for {
@@ -309,7 +317,7 @@ func (e *EthereumObserver) ObserveChain() {
 		}
 
 		// update transactions for each block
-		for blockNum, _ := range e.blocksToRead {
+		for blockNum := range e.blocksToRead {
 			e.removeBlockToRead(blockNum)
 			e.UpdateTransactions(blockNum)
 		}
